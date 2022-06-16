@@ -1,0 +1,234 @@
+#------------------------------------------------Snake game by Yusuf Badaloo----------------------------------------------
+#So in this game your goal is to collect as many apples as possiable without dying(touching yourself or the wall). Try to get a highscore and have fun! (also its endless so when you die it just restarts)
+
+import pygame, sys, random
+#good luck going through this brother👍👍 🤣
+from pygame.math import Vector2
+
+print("Welcome to my snakegame. When starting your snake wont move until you press one of the arrow keys. Use the arrow keys to move around and collect apples. Make sure not to die by hiting yourself or the wall. Have fun!")
+
+
+
+class SNAKE:
+    def __init__(self):
+        self.body = [Vector2(5,10),Vector2(4,10),Vector2(3,10),] #Starting off position of snake
+        self.direction = Vector2(0,0) #direction its in
+        self.new_block = False
+
+        #Basicly here Im just importing all the positions for the snake. Totaly didn't copy paste this part from the github file
+        self.head_up = pygame.image.load('Graphics/head_up.png').convert_alpha()
+        self.head_down = pygame.image.load('Graphics/head_down.png').convert_alpha()
+        self.head_right = pygame.image.load('Graphics/head_right.png').convert_alpha()
+        self.head_left = pygame.image.load('Graphics/head_left.png').convert_alpha()
+		
+        self.tail_up = pygame.image.load('Graphics/tail_up.png').convert_alpha()
+        self.tail_down = pygame.image.load('Graphics/tail_down.png').convert_alpha()
+        self.tail_right = pygame.image.load('Graphics/tail_right.png').convert_alpha()
+        self.tail_left = pygame.image.load('Graphics/tail_left.png').convert_alpha()
+
+        self.body_vertical = pygame.image.load('Graphics/body_vertical.png').convert_alpha()
+        self.body_horizontal = pygame.image.load('Graphics/body_horizontal.png').convert_alpha()
+
+        self.body_tr = pygame.image.load('Graphics/body_tr.png').convert_alpha()
+        self.body_tl = pygame.image.load('Graphics/body_tl.png').convert_alpha()
+        self.body_br = pygame.image.load('Graphics/body_br.png').convert_alpha()
+        self.body_bl = pygame.image.load('Graphics/body_bl.png').convert_alpha()
+        self.crunch_sound = pygame.mixer.Sound('Sound/crunch.wav')
+    
+
+    def draw_snake(self): #Drawing the begining of the snake
+        self.update_head_graphics()
+        self.update_tail_graphics()
+
+        for index,block in enumerate(self.body): #looking at all blocks
+            x_pos = int(block.x * cell_size) 
+            y_pos = int(block.y * cell_size)
+            block_rect = pygame.Rect(x_pos,y_pos,cell_size,cell_size)
+
+            if index == 0:
+                screen.blit(self.head,block_rect) #basicly makes the head the image
+
+            elif index == len(self.body) - 1: #Basicls gets the last value of the body (the tail) and replaces it with the tail image
+                screen.blit(self.tail,block_rect )
+
+            else:
+                previous_block = self.body[index + 1] - block #Indexing from body and adding or subtracting from it
+                next_block = self.body[index -1] - block
+                if previous_block.x == next_block.x: #basicly checks if previous and next block are both facing up that means the one inbetween is also up
+                    screen.blit(self.body_vertical,block_rect)
+                elif previous_block.y == next_block.y: #basicly checks if previous and next block are both horizontal that means the one inbetween is also horizontal   
+                    screen.blit(self.body_horizontal,block_rect)
+                else: #corner 
+                    if previous_block.x == -1 and next_block.y == -1 or previous_block.y == -1 and next_block.x == -1: #All of these here all depends on what the block before and after are facing. 
+                        screen.blit(self.body_tl,block_rect)
+                    elif previous_block.x == -1 and next_block.y == 1 or previous_block.y == 1 and next_block.x == -1:  # THat is what tells you if its a top right corner or bottom left etc...
+                        screen.blit(self.body_bl,block_rect)
+                    elif previous_block.x == 1 and next_block.y == -1 or previous_block.y == -1 and next_block.x == 1: 
+                        screen.blit(self.body_tr,block_rect)
+                    elif previous_block.x == 1 and next_block.y == 1 or previous_block.y == 1 and next_block.x == 1: 
+                        screen.blit(self.body_br,block_rect) #PS i somehow understand this
+ 
+
+    def update_head_graphics(self): #picks on of the 4 different possiable heads depending on direction
+        head_relation = self.body[1] - self.body[0] #one after head sibtracted from head
+
+        if head_relation == Vector2(1,0): self.head = self.head_left  #if its to the left then add the left head pic
+        elif head_relation == Vector2(-1,0): self.head = self.head_right #makes right pic for when snake is right
+        elif head_relation == Vector2(0,1): self.head = self.head_up 
+        elif head_relation == Vector2(0,-1): self.head = self.head_down
+
+    def update_tail_graphics(self): #basicly changes the image of the snake tail depending on direction 
+        tail_relation = self.body[-2] - self.body[-1] #looks at the last one and second last one
+
+        if tail_relation == Vector2(1,0): self.tail = self.tail_left  
+        elif tail_relation == Vector2(-1,0): self.tail = self.tail_right #makes right pic for when the block before it is right
+        elif tail_relation == Vector2(0,1): self.tail = self.tail_up 
+        elif tail_relation == Vector2(0,-1): self.tail = self.tail_down                
+
+
+    def move_snake(self): #How dose the snake move? First the head moves in the direction its facing. Then all previous blocks move in the direction of the block before it. The last block of the snake is deleted
+     
+        if self.new_block == True:
+            body_copy = self.body[:] #Copy self.body list but adds one
+            body_copy.insert(0,body_copy[0] + self.direction)
+            self.body = body_copy[:]
+            self.new_block = False # So it dosnt extent for eternity
+
+        else:
+            body_copy = self.body[:-1] #Copy self.body list but removes the first one
+            body_copy.insert(0,body_copy[0] + self.direction)
+            self.body = body_copy[:]
+
+    def add_block(self):
+        self.new_block = True
+
+    def reset(self): #this is supposed to reset snake
+        self.body = [Vector2(5,10),Vector2(4,10),Vector2(3,10),] #just puts it back in same position. Score depends on snake length so it changes with it.
+        self.direction = Vector2(0,0)
+
+class FRUIT:
+    def __init__(self):
+        self.randomize() #moves fruit :)
+
+    def draw_fruit(self): #draws fruit
+        fruit_rect = pygame.Rect(int(self.pos.x * cell_size),int(self.pos.y * cell_size) ,cell_size, cell_size)
+        screen.blit(apple,fruit_rect) #adds the picture of an apple instead of a square
+        #pygame.draw.rect(screen,(126,166,144), fruit_rect)
+
+    def randomize(self):
+        self.x = random.randint(0,cell_number - 1) #random x location
+        self.y = random.randint(0,cell_number - 1) #random y location
+        self.pos = pygame.math.Vector2(self.x, self.y) # math stuff👍
+        
+class MAIN: #Main class were it calls almost everything and manages alot of stuff
+    def __init__(self):
+        self.snake = SNAKE()
+        self.fruit = FRUIT()
+
+    def update(self):
+        self.snake.move_snake() #Every 150millisec the snake moves  
+        self.check_collision() #
+        self.check_fail()
+        
+    def draw_elements(self): #Calls quite a few functions
+        self.draw_grass()
+        self.fruit.draw_fruit() # draws fruit
+        self.snake.draw_snake() #draws snake
+        self.draw_score()
+
+    def check_collision(self):
+        if self.fruit.pos == self.snake.body[0]: #if the head of the snake is in the same posistion of our fruit (so it ate it)
+            self.fruit.randomize() #makes the fruit random position
+            self.snake.add_block() #adds a part to the snake
+
+        for block in self.snake.body[1:]: #So basicly its checking if the fruit spawns on the body of the snake it just spawns somewere else
+            if block == self.fruit.pos: #if fruit is in the snake
+                self.fruit.randomize #randomises position
+
+    def check_fail(self):
+        if not 0<= self.snake.body[0].x  < cell_number or not 0<= self.snake.body[0].y  < cell_number: #checks if head is outside of the screen 
+            self.game_over()
+
+        for block in self.snake.body[1:]:
+            if block == self.snake.body[0]:
+                self.game_over()
+
+    def game_over(self): #quits/ exits the window
+        self.snake.reset()
+
+    def draw_grass(self): #Draws grass :/ (super interesting)
+        #cycles through each tile and depending if its a odd or even number the green grass is a darker or lighter color
+        grass_color = (167,209,61) #dark green in rgb
+
+        for row in range(cell_number):
+            if row % 2 == 0:
+                for col in range(cell_number): #cycles through all of the tiles
+                    if col % 2 == 0:
+                        grass_rect = pygame.Rect(col * cell_size,row * cell_size,cell_size,cell_size)
+                        pygame.draw.rect(screen,grass_color,grass_rect) #draws it
+
+            else:
+                for col in range(cell_number): #cycles through all of the tiles
+                    if col % 2 != 0:
+                        grass_rect = pygame.Rect(col * cell_size,row * cell_size,cell_size,cell_size)
+                        pygame.draw.rect(screen,grass_color,grass_rect) #draws it
+
+    def draw_score(self):
+        score_text = str(len(self.snake.body) - 3) #Basicly score is based off our snake length and since the snake length is 3 at the start we subtract 3 here
+        score_surface = game_font.render(score_text,True,(56,74,12))
+        score_x = (cell_size * cell_number - 60) #X position of score
+        score_y = (cell_size * cell_number - 40) # Y position of scire
+        score_rect = score_surface.get_rect(center = (score_x,score_y)) #Basicly makes a rectangle with the y pos and x pos
+        apple_rect = apple.get_rect(midright = (score_rect.left, score_rect.centery)) #Basicly positioning the apple beside the score
+        bg_rect = pygame.Rect(apple_rect.left,apple_rect.top,apple_rect.width + score_rect.width + 6,apple_rect.height) #makes a rectangle behind the apple and score
+        
+        pygame.draw.rect(screen,(167,209,61),bg_rect) #draws and makes color for the rectangle behind the apple and score
+        screen.blit(score_surface,score_rect) #implements/blits the score on the screen
+        screen.blit(apple,apple_rect) #Puts the apple on the screen
+        pygame.draw.rect(screen,(56,74,12),bg_rect,2) #The outline of the box
+    
+  
+
+pygame.init()
+cell_size = 40 # size of each small box in a grid
+cell_number = 20 #number of the boxes
+screen = pygame.display.set_mode((cell_number * cell_size,cell_number * cell_size )) #makes a screen
+clock = pygame.time.Clock()
+apple = pygame.image.load('Graphics/apple.png').convert_alpha()
+game_font = pygame.font.Font('font/PoetsenOne-Regular.ttf',25)
+
+SCREEN_UPDATE = pygame.USEREVENT 
+pygame.time.set_timer(SCREEN_UPDATE,150) #makes timer every 150millisec
+
+main_game = MAIN()
+
+while True:
+    for event in pygame.event.get(): #Finds an event from the user (like an action)
+        if event.type == pygame.QUIT:
+            pygame.quit()
+            sys.exit #Closes the window
+
+        if event.type == SCREEN_UPDATE:
+            main_game.update() #updates the screen
+
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_UP:
+                if main_game.snake.direction.y != 1: #makes sure u cant press down while going up
+                    main_game.snake.direction = Vector2(0,-1) #Moves the snake up
+
+            if event.key == pygame.K_DOWN:
+                if main_game.snake.direction.y != -1: #makes sure u cant go up while going down
+                    main_game.snake.direction = Vector2(0,1)#moves snake down
+
+            if event.key == pygame.K_RIGHT:
+                if main_game.snake.direction.x != -1: #makes sure you cant go left while going right
+                    main_game.snake.direction = Vector2(1,0)#moves snake right
+
+            if event.key == pygame.K_LEFT: 
+                if main_game.snake.direction.x != 1: #makes sure you cant go right while going left
+                    main_game.snake.direction = Vector2(-1,0)#moves snake left
+
+    screen.fill((175,215,70))
+    main_game.draw_elements()
+    pygame.display.update() #Updates the screen so it can display everything 
+    clock.tick(60) #framerate (fps)
